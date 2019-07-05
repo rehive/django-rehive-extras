@@ -4,7 +4,7 @@ from django.utils.encoding import force_text
 from rest_framework import status
 
 
-class BaseException(Exception):
+class DjangoBaseException(Exception):
     """
     Generic exception that handles a status code, default detail and slug.
     """
@@ -25,7 +25,7 @@ class BaseException(Exception):
         return self.detail
 
 
-class CannotModifyObjectWithArchivedParentError(BaseException):
+class CannotModifyObjectWithArchivedParentError(DjangoBaseException):
     """
     Error for when modifications are disallowed on objects with archived
     parents.
@@ -36,7 +36,7 @@ class CannotModifyObjectWithArchivedParentError(BaseException):
     default_error_slug = 'cannot_unarchive_object_with_archived_parent'
 
 
-class CannotModifyArchivedObjectError(BaseException):
+class CannotModifyArchivedObjectError(DjangoBaseException):
     """
     Error for when modifications are disallowed on archived objects.
     """
@@ -46,7 +46,7 @@ class CannotModifyArchivedObjectError(BaseException):
     default_error_slug = 'cannot_modify_archived_object'
 
 
-class CannotDeleteUnarchivedObjectError(BaseException):
+class CannotDeleteUnarchivedObjectError(DjangoBaseException):
     """
     Error for when deletes are disallowed on unarchived objects.
     """
@@ -56,7 +56,7 @@ class CannotDeleteUnarchivedObjectError(BaseException):
     default_error_slug = 'cannot_delete_unarchived_object'
 
 
-class CannotArchiveObjectError(BaseException):
+class CannotArchiveObjectError(DjangoBaseException):
     """
     Error for when deletes are disallowed on objects.
     """
@@ -66,7 +66,7 @@ class CannotArchiveObjectError(BaseException):
     default_error_slug = 'cannot_archive_object'
 
 
-class CannotDeleteObjectError(BaseException):
+class CannotDeleteObjectError(DjangoBaseException):
     """
     Error for when deletes are disallowed on objects.
     """
