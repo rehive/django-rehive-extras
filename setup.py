@@ -12,15 +12,15 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
-    name='django-extra',
+    name='django-rehive-extras',
     version=VERSION,
     packages=find_packages(),
     include_package_data=True,
     description='Extras for Django',
     long_description=README,
     long_description_content_type='text/markdown',
-    url='https://github.com/rehive/django-extra',
-    download_url='https://github.com/rehive/django-extra/archive/{}.zip'.format(VERSION),
+    url='https://github.com/rehive/django-rehive-extras',
+    download_url='https://github.com/rehive/django-rehive-extras/archive/{}.zip'.format(VERSION),
     author='Rehive',
     author_email='info@rehive.com',
     license='MIT',
