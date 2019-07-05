@@ -102,7 +102,7 @@ class ArchiveNode():
         fields = [f for f in self.model._meta.get_fields()
                  if (f.related_model not in models
                  and (f.one_to_many or f.one_to_one)
-                 and (issubclass(f.related_model, BaseModel)))]
+                 and (issubclass(f.related_model, ArchiveModel)))]
 
         for f in fields:
             if hasattr(f, 'field'):
@@ -170,16 +170,7 @@ class ArchiveNode():
             node.update(instance, archived)
 
 
-class BaseModel(modes.Model):
-    """
-    Generic abstract base model that all models inherit from.
-    """
-
-    class Meta:
-        abstract = True
-
-
-class DateModel(BaseModel):
+class DateModel(models.Model):
     """
     Abstract model that stores a created and updated date for each object.
     """
@@ -187,14 +178,20 @@ class DateModel(BaseModel):
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True, db_index=True)
 
+    class Meta:
+        abstract = True
+
     def __str__(self):
         return str(self.created)
 
 
-class StateModel(BaseModel):
+class StateModel(models.Model):
     """
     Abstract model that stores a temporary model state on instantiation.
     """
+
+    class Meta:
+        abstract = True
 
     def __init__(self, *args, **kwargs):
         """
@@ -220,6 +217,9 @@ class ArchiveModel(StateModel):
 
     _must_be_archived_to_delete = True
     _must_be_unarchived_to_modify = True
+
+    class Meta:
+        abstract = True
 
     @transaction.atomic
     def save(self, *args, **kwargs):
@@ -275,4 +275,5 @@ class IntegratedModel(DateModel, ArchiveModel):
     archive related functionality.
     """
 
-    pass
+    class Meta:
+        abstract = True
