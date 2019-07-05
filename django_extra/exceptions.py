@@ -1,11 +1,10 @@
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import force_text
-
 # TODO : Base files should not rely on DRF. Add this to the base library.
 from rest_framework import status
 
 
-class RehiveBaseException(Exception):
+class BaseException(Exception):
     """
     Generic exception that handles a status code, default detail and slug.
     """
@@ -26,7 +25,7 @@ class RehiveBaseException(Exception):
         return self.detail
 
 
-class CannotModifyObjectWithArchivedParentError(RehiveBaseException):
+class CannotModifyObjectWithArchivedParentError(BaseException):
     """
     Error for when modifications are disallowed on objects with archived
     parents.
@@ -37,7 +36,7 @@ class CannotModifyObjectWithArchivedParentError(RehiveBaseException):
     default_error_slug = 'cannot_unarchive_object_with_archived_parent'
 
 
-class CannotModifyArchivedObjectError(RehiveBaseException):
+class CannotModifyArchivedObjectError(BaseException):
     """
     Error for when modifications are disallowed on archived objects.
     """
@@ -47,7 +46,7 @@ class CannotModifyArchivedObjectError(RehiveBaseException):
     default_error_slug = 'cannot_modify_archived_object'
 
 
-class CannotDeleteUnarchivedObjectError(RehiveBaseException):
+class CannotDeleteUnarchivedObjectError(BaseException):
     """
     Error for when deletes are disallowed on unarchived objects.
     """
@@ -57,7 +56,7 @@ class CannotDeleteUnarchivedObjectError(RehiveBaseException):
     default_error_slug = 'cannot_delete_unarchived_object'
 
 
-class CannotArchiveObjectError(RehiveBaseException):
+class CannotArchiveObjectError(BaseException):
     """
     Error for when deletes are disallowed on objects.
     """
@@ -67,7 +66,7 @@ class CannotArchiveObjectError(RehiveBaseException):
     default_error_slug = 'cannot_archive_object'
 
 
-class CannotDeleteObjectError(RehiveBaseException):
+class CannotDeleteObjectError(BaseException):
     """
     Error for when deletes are disallowed on objects.
     """

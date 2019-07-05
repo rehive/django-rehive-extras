@@ -5,7 +5,7 @@ from django.db.models import Case, When, Value, ProtectedError
 from django.db.models.expressions import Func, Expression, F
 from django.contrib.postgres.fields import ArrayField
 
-from django_extra.exceptions import (
+from .exceptions import (
     CannotModifyObjectWithArchivedParentError,
     CannotModifyArchivedObjectError,
     CannotDeleteUnarchivedObjectError,
@@ -46,7 +46,7 @@ class ArchiveNode():
     """
     A single direction cascade node for django models. Expanding this
     node will create a tree that can be used to cascade changes through
-    the all related tables in one direction.
+    all related tables in one direction.
     """
 
     def __init__(self, model, parent=None, relation_field=None):
@@ -92,7 +92,7 @@ class ArchiveNode():
         Uses introspection to build a single-direction tree of related models.
         """
 
-        # Instantiate a model list. prevents circular dependences in the tree.
+        # Instantiate a model list. Prevents circular dependences in the tree.
         if models is None:
             models = [self.model]
 
@@ -130,7 +130,7 @@ class ArchiveNode():
         """
 
         if archived is None:
-            raise Exception("The archived kwarg should be a boolean")
+            raise Exception("The archived kwarg should be a boolean.")
 
         # Get the model name of the instance that triggered the update action.
         # This is used to track what object caused another object to be updated.
@@ -170,18 +170,46 @@ class ArchiveNode():
             node.update(instance, archived)
 
 
-class BaseModel(models.Model):
+class BaseModel(modes.Model):
     """
-    Generic abstract model that includes date fields, and a set of archive
-    related fields. Also automatically includes an "original" state of the
-    current model in the instance.
+    Generic abstract base model that all models inherit from.
     """
 
-    # Date fields.
+    class Meta:
+        abstract = True
+
+
+class DateModel(BaseModel):
+    """
+    Abstract model that stores a created and updated date for each object.
+    """
+
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True, db_index=True)
 
-    # Archive fields.
+    def __str__(self):
+        return str(self.created)
+
+
+class StateModel(BaseModel):
+    """
+    Abstract model that stores a temporary model state on instantiation.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Set the original state of the model on instantiation.
+        """
+
+        super().__init__(*args, **kwargs)
+        self.original = deepcopy(self)
+
+
+class ArchiveModel(StateModel):
+    """
+    Abstract model that handles archiving of related data.
+    """
+
     archived = models.BooleanField(default=False)
     archive_points = ArrayField(
         models.CharField(max_length=50),
@@ -190,28 +218,8 @@ class BaseModel(models.Model):
         blank=True
     )
 
-    # Additional settings that can be overidden for each model.
     _must_be_archived_to_delete = True
     _must_be_unarchived_to_modify = True
-    _store_original = True
-
-    class Meta:
-        abstract = True
-
-    def __str__(self):
-        return str(self.created)
-
-    def __init__(self, *args, **kwargs):
-        """
-        Set the original state of the model before modifications.
-        """
-
-        super().__init__(*args, **kwargs)
-
-        if self._store_original:
-            self.original = deepcopy(self)
-        else:
-            self.original = None
 
     @transaction.atomic
     def save(self, *args, **kwargs):
@@ -259,3 +267,12 @@ class BaseModel(models.Model):
             super().delete()
         except ProtectedError:
             raise CannotDeleteObjectError()
+
+
+class IntegratedModel(DateModel, ArchiveModel):
+    """
+    Generic abstract model that includes date, original state, and
+    archive related functionality.
+    """
+
+    pass
