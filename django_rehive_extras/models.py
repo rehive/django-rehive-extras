@@ -207,7 +207,7 @@ class ArchiveModel(StateModel):
     Abstract model that handles archiving of related data.
     """
 
-    archived = models.BooleanField(default=False)
+    archived = models.BooleanField(db_index=True, default=False)
     archive_points = ArrayField(
         models.CharField(max_length=50),
         size=10,
