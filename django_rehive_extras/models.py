@@ -261,8 +261,8 @@ class ArchiveModel(StateModel):
         """
 
         # Ensure the object is already archived before deleting.
-        if not force
-                and (self._must_be_archived_to_delete and not self.archived):
+        if (not force
+                and (self._must_be_archived_to_delete and not self.archived)):
             raise CannotDeleteUnarchivedObjectError()
 
         try:
