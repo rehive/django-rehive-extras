@@ -222,7 +222,7 @@ class ArchiveModel(StateModel):
         abstract = True
 
     @transaction.atomic
-    def save(self, *args, **kwargs):
+    def save(self, force=False, *args, **kwargs):
         """
         Save the instance and handle archiving if necessary. Run save in a
         transaction so that failed inserts are rolled back.
@@ -247,20 +247,22 @@ class ArchiveModel(StateModel):
                 node.expand()
                 node.update(self, archived=False)
 
-        # If already archived then ensure modifications cannot be performed
+        # Else if already archived then ensure modifications cannot be performed
         # on the model instance (except for archive changes as above).
-        elif self._must_be_unarchived_to_modify and self.archived:
+        elif (not force
+                and (self._must_be_unarchived_to_modify and self.archived)):
             raise CannotModifyArchivedObjectError()
 
         return super().save(*args, **kwargs)
 
-    def delete(self):
+    def delete(self, force=False):
         """
         Delete the instance and handle model specific delete preferences.
         """
 
         # Ensure the object is already archived before deleting.
-        if self._must_be_archived_to_delete and not self.archived:
+        if not force
+                and (self._must_be_archived_to_delete and not self.archived):
             raise CannotDeleteUnarchivedObjectError()
 
         try:
