@@ -70,7 +70,7 @@ class ArchiveNode():
     @staticmethod
     def _get_relation_fields(node, fields=None):
         """
-        Build a list relationship fields by ascending up the node tree.
+        Build a list of relationship fields by ascending up the node tree.
 
         The resulting list can then be used to construct a Django
         "query param" filter field.
@@ -85,24 +85,30 @@ class ArchiveNode():
 
         return fields
 
-    def expand(self, models=None):
+    def expand(self, parsed_rel_fields=None):
         """
         Expand relationships from the node.
-
         Uses introspection to build a single-direction tree of related models.
         """
 
-        # Instantiate a model list. Prevents circular dependences in the tree.
-        if models is None:
-            models = [self.model]
+        # Instantiate a parsed_rel_fields list.
+        if parsed_rel_fields is None:
+            parsed_rel_fields = []
+
+        def _get_f_key(model, f):
+            rel_model_name = f.related_model.__name__.lower() \
+                if f.related_model else None
+            return "{}:{}".format(model.__name__.lower(), rel_model_name)
 
         # Get the current node's (model's) dependent relationship fields.
         # 1. The field must be a relationship field.
         # 2. The related field's model must be a BaseModel type.
+        # 3. The relationship must not have been parsed already.
         fields = [f for f in self.model._meta.get_fields()
-                 if (f.related_model not in models
-                 and (f.one_to_many or f.one_to_one)
-                 and (issubclass(f.related_model, ArchiveModel)))]
+                 if (f.related_model != self.model
+                     and (_get_f_key(self.model, f) not in parsed_rel_fields)
+                     and (f.one_to_many or f.one_to_one)
+                     and (issubclass(f.related_model, ArchiveModel)))]
 
         for f in fields:
             if hasattr(f, 'field'):
@@ -112,14 +118,12 @@ class ArchiveNode():
 
             # Create a new node with the correct parent and relationship field.
             node = ArchiveNode(
-                f.related_model,
-                parent=self,
-                relation_field=name
+                f.related_model, parent=self, relation_field=name
             )
 
-            # Add model to models list so circular dependencies don't occur.
-            models.append(f.related_model)
-            node.expand(models=models)
+            # Prevent circular dependencies by adding the field to the list.
+            parsed_rel_fields.append(_get_f_key(self.model, f))
+            node.expand(parsed_rel_fields=parsed_rel_fields)
 
             # Append the completed child node (and tree) to the parent node.
             self.children.append(node)
