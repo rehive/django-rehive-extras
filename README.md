@@ -1,7 +1,7 @@
 <p align="center">
   <img width="64" src="https://avatars2.githubusercontent.com/u/22204821?s=200&v=4" alt="Rehive Logo">
   <h1 align="center">Django Rehive Extras</h1>
-  <p align="center">Extra utilities for using django.</p>
+  <p align="center">Extra utilities for using Django.</p>
 </p>
 
 
