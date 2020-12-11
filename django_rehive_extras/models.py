@@ -232,8 +232,8 @@ class ArchiveModel(StateModel):
         transaction so that failed inserts are rolled back.
         """
 
-        # If the archived status has changed ensure all related objects are
-        # also altered accordingly.
+        # If not a new object and the archived status has changed ensure all
+        # related objects are also altered accordingly.
         if self.original and self.archived != self.original.archived:
             node = ArchiveNode(self.__class__)
 
@@ -251,11 +251,13 @@ class ArchiveModel(StateModel):
                 node.expand()
                 node.update(self, archived=False)
 
-        # Else if already archived then ensure modifications cannot be performed
-        # on the model instance (except for archive changes as above).
-        elif (not force
+        # If a not a new object and it is already archived then ensure
+        # modifications cannot be performed on the instance.
+        elif ((self.original and not force)
                 and (self._must_be_unarchived_to_modify and self.archived)):
             raise CannotModifyArchivedObjectError()
+
+        # NOTE : No archive functionality is required if the object is new.
 
         return super().save(*args, **kwargs)
 
