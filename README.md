@@ -4,7 +4,6 @@
   <p align="center">Extra utilities for using Django.</p>
 </p>
 
-
 ## Features
 
 - Python 3.6
