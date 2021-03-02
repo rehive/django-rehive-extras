@@ -128,7 +128,7 @@ class ArchiveNode():
             # Append the completed child node (and tree) to the parent node.
             self.children.append(node)
 
-    def update(self, instance, archived=None):
+    def update(self, instance, archived=None, point=None):
         """
         Update the node by cascading down the tree. Requires an instance id.
         """
@@ -138,7 +138,7 @@ class ArchiveNode():
 
         # Get the model name of the instance that triggered the update action.
         # This is used to track what object caused another object to be updated.
-        point = instance.__class__.__name__.lower()
+        point = point or instance.__class__.__name__.lower()
 
         for node in self.children:
             # Build filters for specific model and run an update.
