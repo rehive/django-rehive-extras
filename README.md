@@ -4,7 +4,6 @@
   <p align="center">Extra utilities for using Django.</p>
 </p>
 
-
 ## Features
 
 - Python 3.6
@@ -19,15 +18,15 @@
 
 1. Install the package:
 
-```
+```sh
 pip install django-rehive-extras
 ```
 
 2. Add "django_rehive_extras" to your INSTALLED_APPS settings like this:
 
-```
-    INSTALLED_APPS = [
-        ...
-        'django_rehive_extras',
-    ]
+```python
+INSTALLED_APPS = [
+    ...
+    'django_rehive_extras',
+]
 ```
