@@ -80,7 +80,7 @@ class ArchiveNode():
 
         if self.parent:
             fields.append(self.relation_field)
-            return node.parent._get_relation_fields(fields)
+            return self.parent._get_relation_fields(fields)
 
         return fields
 
