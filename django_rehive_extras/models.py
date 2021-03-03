@@ -128,7 +128,7 @@ class ArchiveNode():
             # Append the completed child node (and tree) to the parent node.
             self.children.append(node)
 
-    def update_queryet(self, queryset, archived, point):
+    def update_queryset(self, queryset, archived, point):
         # If archiving the related objects. Then ensure the new `point`
         # is added to the related objects.
         if archived is True:
