@@ -128,7 +128,32 @@ class ArchiveNode():
             # Append the completed child node (and tree) to the parent node.
             self.children.append(node)
 
-    def update(self, instance, archived=None, point=None):
+    def update_queryet(self, queryset, archived, point):
+        # If archiving the related objects. Then ensure the new `point`
+        # is added to the related objects.
+        if archived is True:
+            queryset.update(
+                archived=True,
+                archive_points=ArrayAppend('archive_points', point)
+            )
+
+        # If unarchiving the related objects. Then ensure the current
+        # `point` is removed from the related objects. Only set the
+        # archived field to false if there are no points.
+        elif archived is False:
+            queryset.update(
+                archived=Case(
+                    When(
+                        archive_points__contains=[point],
+                        archive_points__len=1,
+                        then=archived
+                    ),
+                    default=F('archived')
+                ),
+                archive_points=ArrayRemove('archive_points', point)
+            )
+
+    def update(self, instance, archived=None):
         """
         Update the node by cascading down the tree. Requires an instance id.
         """
@@ -138,7 +163,7 @@ class ArchiveNode():
 
         # Get the model name of the instance that triggered the update action.
         # This is used to track what object caused another object to be updated.
-        point = point or instance.__class__.__name__.lower()
+        point = instance.__class__.__name__.lower()
 
         for node in self.children:
             # Build filters for specific model and run an update.
@@ -146,29 +171,10 @@ class ArchiveNode():
             fields = self._get_relation_fields(node)
             filters["".join(("__".join(fields), '__id'))] = instance.id
 
-            # If archiving the related objects. Then ensure the new `point`
-            # is added to the related objects.
-            if archived is True:
-                node.model.objects.filter(**filters).update(
-                    archived=archived,
-                    archive_points=ArrayAppend('archive_points', point)
-                )
-
-            # If unarchiving the related objects. Then ensure the current
-            # `point` is removed from the related objects. Only set the
-            # archived field to false if there are no points.
-            if archived is False:
-                node.model.objects.filter(**filters).update(
-                    archived=Case(
-                        When(
-                            archive_points__contains=[point],
-                            archive_points__len=1,
-                            then=archived
-                        ),
-                        default=F('archived')
-                    ),
-                    archive_points=ArrayRemove('archive_points', point)
-                )
+            # Update the queryset.
+            self.update_queryset(
+                node.model.objects.filter(**filters), archived, point
+            )
 
             # Cascade down to next node.
             node.update(instance, archived)
