@@ -67,8 +67,7 @@ class ArchiveNode():
 
         return str(self.model)
 
-    @staticmethod
-    def _get_relation_fields(node, fields=None):
+    def _get_relation_fields(self, fields=None):
         """
         Build a list of relationship fields by ascending up the node tree.
 
@@ -79,9 +78,9 @@ class ArchiveNode():
         if not fields:
             fields = []
 
-        if node.parent:
-            fields.append(node.relation_field)
-            return ArchiveNode._get_relation_fields(node.parent, fields)
+        if self.parent:
+            fields.append(self.relation_field)
+            return node.parent._get_relation_fields(fields)
 
         return fields
 
@@ -117,7 +116,7 @@ class ArchiveNode():
                 name = f.remote_field.name
 
             # Create a new node with the correct parent and relationship field.
-            node = ArchiveNode(
+            node = self.__class__(
                 f.related_model, parent=self, relation_field=name
             )
 
@@ -168,7 +167,7 @@ class ArchiveNode():
         for node in self.children:
             # Build filters for specific model and run an update.
             filters = {}
-            fields = self._get_relation_fields(node)
+            fields = node._get_relation_fields()
             filters["".join(("__".join(fields), '__id'))] = instance.id
 
             # Update the queryset.
