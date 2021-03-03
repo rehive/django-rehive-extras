@@ -133,7 +133,13 @@ class ArchiveNode():
         if archived is True:
             queryset.update(
                 archived=True,
-                archive_points=ArrayAppend('archive_points', point)
+                archive_points=Case(
+                    When(
+                        archive_points__contains=[point],
+                        then=F('archive_points')
+                    ),
+                    default=ArrayAppend('archive_points', point)
+                )
             )
 
         # If unarchiving the related objects. Then ensure the current
@@ -145,7 +151,7 @@ class ArchiveNode():
                     When(
                         archive_points__contains=[point],
                         archive_points__len=1,
-                        then=archived
+                        then=False
                     ),
                     default=F('archived')
                 ),
