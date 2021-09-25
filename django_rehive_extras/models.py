@@ -138,7 +138,10 @@ class ArchiveNode():
                         archive_points__contains=[point],
                         then=F('archive_points')
                     ),
-                    default=ArrayAppend('archive_points', point)
+                    default=ArrayAppend('archive_points', point),
+                    output_field=ArrayField(
+                        models.CharField(max_length=50),
+                    )
                 )
             )
 
@@ -153,7 +156,10 @@ class ArchiveNode():
                         archive_points__len=1,
                         then=False
                     ),
-                    default=F('archived')
+                    default=F('archived'),
+                    output_field=ArrayField(
+                        models.CharField(max_length=50),
+                    )
                 ),
                 archive_points=ArrayRemove('archive_points', point)
             )
