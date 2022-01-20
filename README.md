@@ -6,7 +6,7 @@
 
 ## Features
 
-- Python 3.6
+- Python 3.6, 3.7, 3.8, 3.9, 3.10
 - Money model field using decimals.
 - Date model with created/updated field.
 - State model that stores the previous state of a model instance in memory.
