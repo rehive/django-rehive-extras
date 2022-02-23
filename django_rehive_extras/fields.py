@@ -34,8 +34,8 @@ class ImageFieldFile(FieldFile, files.ImageFieldFile):
 class FileField(files.FileField):
     attr_class = FieldFile
 
-    def __init__(self, verbose_name=None, name=None, upload_to='', storage=None, clear_metadata=False, **kwargs):
-        self.clear_metadata = clear_metadata
+    def __init__(self, verbose_name=None, name=None, upload_to='', storage=None, clear_metadata=True, **kwargs):
+        self.clear_metadata = self._clear_metadata if clear_metadata is True else clear_metadata
         # To maintain the MRO sequence
         kwargs.update({
             "upload_to": upload_to,
@@ -67,6 +67,18 @@ class FileField(files.FileField):
             return self.clear_metadata(instance, content)
         return content
 
+    @classmethod
+    def _clear_metadata(cls, instance, file):
+        try:
+            pyexiv_image = ImageData(file.read())
+            pyexiv_image.clear_exif()
+            file.seek(0)
+            file.truncate()
+            file.write(pyexiv_image.get_bytes())
+            return file
+        except Exception as e:
+            return file
+
 
 class ImageField(FileField, models.ImageField):
     attr_class = ImageFieldFile
@@ -82,16 +94,6 @@ class ImageField(FileField, models.ImageField):
         # To maintain the MRO sequence
         kwargs.update({
             "width_field": width_field,
-            "height_field": height_field,
-            "clear_metadata": self._clear_metadata if clear_metadata is True else clear_metadata
+            "height_field": height_field
         })
-        super().__init__(verbose_name, name, **kwargs)
-
-    @classmethod
-    def _clear_metadata(cls, instance, file):
-        pyexiv_image = ImageData(file.read())
-        pyexiv_image.clear_exif()
-        file.seek(0)
-        file.truncate()
-        file.write(pyexiv_image.get_bytes())
-        return file
+        super().__init__(verbose_name, name, clear_metadata=clear_metadata, **kwargs)
