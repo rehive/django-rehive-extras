@@ -76,7 +76,7 @@ class FileField(files.FileField):
             file.truncate()
             file.write(pyexiv_image.get_bytes())
             return file
-        except Exception as e:
+        except RuntimeError:
             return file
 
 
