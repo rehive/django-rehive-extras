@@ -1,3 +1,4 @@
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models
 from django.db.models.fields import files
 from django.core import checks
@@ -24,6 +25,8 @@ class MoneyField(models.DecimalField):
 class FieldFile(files.FieldFile):
     def save(self, name, content, save=True):
         content = self.field.generate_content(self.instance, content)
+        content.seek(0)
+        content.size = len(content.read())
         super().save(name, content, save)
 
 
