@@ -5,6 +5,7 @@ from django.db.models import Case, When, Value, ProtectedError
 from django.db.models.expressions import Func, Expression, F
 from django.contrib.postgres.fields import ArrayField
 
+from django_rehive_extras.mixins import CachedPropertyHandlerMixin
 from .exceptions import (
     CannotModifyObjectWithArchivedParentError,
     CannotModifyArchivedObjectError,
@@ -293,7 +294,7 @@ class ArchiveModel(StateModel):
             raise CannotDeleteObjectError()
 
 
-class IntegratedModel(DateModel, ArchiveModel):
+class IntegratedModel(CachedPropertyHandlerMixin, DateModel, ArchiveModel):
     """
     Generic abstract model that includes date, original state, and
     archive related functionality.
