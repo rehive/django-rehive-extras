@@ -3,7 +3,7 @@ from codecs import open
 from setuptools import find_packages, setup
 
 
-VERSION = '1.2.0'
+VERSION = '1.3.0'
 
 with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
     README = readme.read()
@@ -24,7 +24,7 @@ setup(
     author='Rehive',
     author_email='info@rehive.com',
     license='MIT',
-    install_requires=["Django>=3.0", "pyexiv2==2.7.1"],
+    install_requires=["Django>=3.0", "pyexiv2==2.7.1", "django-filter>=21.0"],
     python_requires='>=3.6',
     classifiers=[
         'Framework :: Django',
