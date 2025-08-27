@@ -243,7 +243,7 @@ class ArchiveModel(StateModel):
     class Meta:
         abstract = True
 
-    @transaction.atomic
+    @transaction.atomic(savepoint=False)
     def save(self, force=False, *args, **kwargs):
         """
         Save the instance and handle archiving if necessary. Run save in a
