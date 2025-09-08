@@ -5,6 +5,7 @@ from django.db.models import Case, When, Value, ProtectedError
 from django.db.models.expressions import Func, Expression, F
 from django.contrib.postgres.fields import ArrayField
 
+from django_rehive_extras.utils.copy import copy_model_instance
 from django_rehive_extras.mixins import CachedPropertyHandlerMixin
 from .exceptions import (
     CannotModifyObjectWithArchivedParentError,
@@ -217,11 +218,35 @@ class StateModel(models.Model):
 
     def __init__(self, *args, **kwargs):
         """
-        Set the original state of the model on instantiation.
+        Initialize with original state set to None.
         """
 
         super().__init__(*args, **kwargs)
-        self.original = deepcopy(self)
+        self.original = None
+
+    def __setattr__(self, name, value):
+        """
+        Capture original state before first field modification.
+        """
+
+        # Only capture original for field changes on existing instances.
+        if (hasattr(self, '_state')
+                and not self._state.adding
+                and hasattr(self._meta, 'get_field')):
+            try:
+                # Check if this is a model field.
+                self._meta.get_field(name)
+
+                # Store the original if a value is changing and it is not set
+                # already.
+                if (self.original is None
+                        and hasattr(self, name)
+                        and getattr(self, name, None) != value):
+                    self.original = copy_model_instance(self)
+            except (FieldDoesNotExist, AttributeError):
+                pass
+
+        super().__setattr__(name, value)
 
 
 class ArchiveModel(StateModel):
