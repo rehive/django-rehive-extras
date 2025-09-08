@@ -2,6 +2,7 @@ from copy import deepcopy
 
 from django.db import models, transaction
 from django.db.models import Case, When, Value, ProtectedError
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models.expressions import Func, Expression, F
 from django.contrib.postgres.fields import ArrayField
 
