@@ -239,10 +239,10 @@ class StateModel(models.Model):
                 self._meta.get_field(name)
 
                 # Store the original if a value is changing and it is not set
-                # already.
+                # already. Use __dict__ to avoid triggering deferred field loading.
                 if (self.original is None
-                        and hasattr(self, name)
-                        and getattr(self, name, None) != value):
+                        and name in self.__dict__
+                        and self.__dict__[name] != value):
                     self.original = copy_model_instance(self)
             except (FieldDoesNotExist, AttributeError):
                 pass
