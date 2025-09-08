@@ -56,4 +56,8 @@ def copy_model_instance(instance, memo=None):
             if field_name in instance_dict:
                 new_instance_dict[field_name] = instance_dict[field_name]
 
+    # Preserve the 'original' attribute if it exists (used by StateModel)
+    if 'original' in instance_dict:
+        new_instance_dict['original'] = instance_dict['original']
+
     return new_instance
