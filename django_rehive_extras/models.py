@@ -281,11 +281,9 @@ class StateModel(BaseModel):
                 # Check if this is a model field.
                 self._meta.get_field(name)
 
-                # Store the original if a value is changing and it is not set
-                # already. Use __dict__ to avoid triggering deferred field loading.
-                if (self.original is None
-                        and name in self.__dict__
-                        and self.__dict__[name] != value):
+                # Store the original if the attribute getting set is in the
+                # self.__dict__ store.
+                if (self.original is None and name in self.__dict__):
                     self.original = copy_model_instance(self)
                     self.original.can_be_modified_on_db = False
             except (FieldDoesNotExist, AttributeError):
