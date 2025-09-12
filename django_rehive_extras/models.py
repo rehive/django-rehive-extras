@@ -194,7 +194,49 @@ class ArchiveNode():
             node.update(instance, archived)
 
 
-class DateModel(models.Model):
+class BaseModel(models.Model):
+
+    class Meta:
+        abstract = True
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize with predefined attributes.
+        """
+
+        super().__init__(*args, **kwargs)
+        # Default to allow instance level db modifications.
+        # NOTE : This does not prevent queryset level db modifications.
+        self.can_be_modified_on_db = True
+
+    def save(self, *args, **kwargs):
+        """
+        Prevent saving if can_be_modified_on_db is False.
+        """
+
+        if not getattr(self, "can_be_modified_on_db", True):
+            raise RuntimeError(
+                f"Save blocked: {self.__class__.__name__} instance marked as"
+                 " not modifiable."
+            )
+
+        return super().save(*args, **kwargs)
+
+    def delete(self):
+        """
+        Prevent deleting if can_be_modified_on_db is False.
+        """
+
+        if not getattr(self, "can_be_modified_on_db", True):
+            raise RuntimeError(
+                f"Delete blocked: {self.__class__.__name__} instance marked as"
+                 " not modifiable."
+            )
+
+        return super().delete()
+
+
+class DateModel(BaseModel):
     """
     Abstract model that stores a created and updated date for each object.
     """
@@ -209,7 +251,7 @@ class DateModel(models.Model):
         return str(self.created)
 
 
-class StateModel(models.Model):
+class StateModel(BaseModel):
     """
     Abstract model that stores a temporary model state on instantiation.
     """
@@ -223,6 +265,7 @@ class StateModel(models.Model):
         """
 
         super().__init__(*args, **kwargs)
+        # Default to None on the original object.
         self.original = None
 
     def __setattr__(self, name, value):
@@ -244,6 +287,7 @@ class StateModel(models.Model):
                         and name in self.__dict__
                         and self.__dict__[name] != value):
                     self.original = copy_model_instance(self)
+                    self.original.can_be_modified_on_db = False
             except (FieldDoesNotExist, AttributeError):
                 pass
 
