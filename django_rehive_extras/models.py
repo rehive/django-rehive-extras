@@ -1,4 +1,5 @@
 from copy import deepcopy
+from collections import deque
 
 from django.db import models, transaction
 from django.db.models import Case, When, Value, ProtectedError
@@ -254,9 +255,7 @@ class DateModel(BaseModel):
 
 class StateModel(BaseModel):
     """
-    Abstract model that stores a temporary model history on:
-        - The first attribute change
-        - Save
+    Abstract model that stores a in-memory model history.
     """
 
     class Meta:
@@ -269,11 +268,11 @@ class StateModel(BaseModel):
 
         super().__init__(*args, **kwargs)
 
-        # A history version.: Gets incremented on each save().
+        # A history version: Gets incremented on each save().
         self.history_version = 0
-        # A history list: Gets populated on the first field change OR prior to
+        # A history dict: Gets populated on the first field change OR prior to
         # each save() if it is not populated with a matching version yet.
-        self.history = []
+        self.history = {}
 
     def __setattr__(self, name, value):
         """
@@ -309,7 +308,7 @@ class StateModel(BaseModel):
 
         try:
             return self.history[0]
-        except IndexError:
+        except KeyError:
             return self.capture_history()
 
     @property
@@ -319,7 +318,8 @@ class StateModel(BaseModel):
         """
 
         try:
-            return self.history[-1]
+            k, v = deque(self.history.items(), maxlen=1)[0]
+            return v
         except IndexError:
             return self.capture_history()
 
@@ -335,7 +335,7 @@ class StateModel(BaseModel):
             obj = self.history[self.history_version]
         # Otherwise attempr we copy the model instance and store it with the
         # version as the history key.
-        except IndexError:
+        except KeyError:
             obj = copy_model_instance(self)
             obj.can_be_modified_on_db = False
             self.history[self.history_version] = obj
@@ -346,9 +346,6 @@ class StateModel(BaseModel):
         """
         Handle capturing the model object history.
         """
-
-        # Ensure that the history has been captured before saving.
-        self.capture_history()
 
         super().save(*args, **kwargs)
 
