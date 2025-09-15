@@ -309,7 +309,7 @@ class StateModel(BaseModel):
         try:
             return self.history[0]
         except KeyError:
-            return self.capture_history()
+            return None
 
     @property
     def latest_version(self):
@@ -321,7 +321,7 @@ class StateModel(BaseModel):
             k, v = deque(self.history.items(), maxlen=1)[0]
             return v
         except IndexError:
-            return self.capture_history()
+            return None
 
     @property
     def original(self):
