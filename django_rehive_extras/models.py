@@ -5,6 +5,7 @@ from django.db.models import Case, When, Value, ProtectedError
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models.expressions import Func, Expression, F
 from django.contrib.postgres.fields import ArrayField
+from django.utils.functional import cached_property
 
 from django_rehive_extras.utils.copy import copy_model_instance
 from django_rehive_extras.mixins import CachedPropertyHandlerMixin
@@ -220,7 +221,7 @@ class BaseModel(models.Model):
                  " not modifiable."
             )
 
-        return super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def delete(self):
         """
@@ -233,7 +234,7 @@ class BaseModel(models.Model):
                  " not modifiable."
             )
 
-        return super().delete()
+        super().delete()
 
 
 class DateModel(BaseModel):
@@ -253,7 +254,9 @@ class DateModel(BaseModel):
 
 class StateModel(BaseModel):
     """
-    Abstract model that stores a temporary model state on instantiation.
+    Abstract model that stores a temporary model history on:
+        - The first attribute change
+        - Save
     """
 
     class Meta:
@@ -261,19 +264,26 @@ class StateModel(BaseModel):
 
     def __init__(self, *args, **kwargs):
         """
-        Initialize with original state set to None.
+        Initialize the model instance with history related variables.
         """
 
         super().__init__(*args, **kwargs)
-        # Default to None on the original object.
-        self.original = None
+
+        # A history version.: Gets incremented on each save().
+        self.history_version = 0
+        # A history list: Gets populated on the first field change OR prior to
+        # each save() if it is not populated with a matching version yet.
+        self.history = []
 
     def __setattr__(self, name, value):
         """
-        Capture original state before first field modification.
+        Capture history on first field change.
+
+        This occurs on each attribue change but the history is only re-captured
+        if the history version has changed.
         """
 
-        # Only capture original for field changes on existing instances.
+        # Only capture history for field changes on existing instances.
         if (hasattr(self, '_state')
                 and not self._state.adding
                 and hasattr(self._meta, 'get_field')):
@@ -281,15 +291,70 @@ class StateModel(BaseModel):
                 # Check if this is a model field.
                 self._meta.get_field(name)
 
-                # Store the original if the attribute getting set is in the
-                # self.__dict__ store.
-                if (self.original is None and name in self.__dict__):
-                    self.original = copy_model_instance(self)
-                    self.original.can_be_modified_on_db = False
+                # Capture history on fields in the dict.
+                if name in self.__dict__:
+                    self.capture_history()
             except (FieldDoesNotExist, AttributeError):
                 pass
 
         super().__setattr__(name, value)
+
+    @cached_property
+    def original(self):
+        """
+        Property to retrieve the original object (first in history).
+
+        This is cached because once it is set, it does not change again.
+        """
+
+        try:
+            return history[0]
+        except IndexError:
+            return self.capture_history()
+
+    @property
+    def latest(self):
+        """
+        Property to retrieve the latest object (last in history).
+        """
+
+        try:
+            return history[-1]
+        except IndexError:
+            return self.capture_history()
+
+    def capture_history(self):
+        """
+        Capture history for the model object.
+
+        The history is only re-captured if the history version has changed.
+        """
+
+        # First check if the current version of history has been captured.
+        try:
+            obj = history[self.history_version]
+        # Otherwise attempr we copy the model instance and store it with the
+        # version as the history key.
+        except IndexError:
+            obj = copy_model_instance(self)
+            obj.can_be_modified_on_db = False
+            history[self.history_version] = obj
+
+        return obj
+
+    def save(self, *args, **kwargs):
+        """
+        Handle capturing the model object history.
+        """
+
+        # Ensure that the history has been captured before saving.
+        self.capture_history()
+
+        super().save(*args, **kwargs)
+
+        # Increment the history version so that the next capture store a new
+        # history object.
+        self.history_version += 1
 
 
 class ArchiveModel(StateModel):
@@ -344,7 +409,7 @@ class ArchiveModel(StateModel):
                     and (self._must_be_unarchived_to_modify and self.archived)):
                 raise CannotModifyArchivedObjectError()
 
-        return super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def delete(self, force=False):
         """
