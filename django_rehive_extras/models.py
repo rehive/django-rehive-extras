@@ -255,7 +255,7 @@ class DateModel(BaseModel):
 
 class StateModel(BaseModel):
     """
-    Abstract model that stores a in-memory model history.
+    Abstract model that stores an in-memory model history.
     """
 
     class Meta:
@@ -299,9 +299,9 @@ class StateModel(BaseModel):
         super().__setattr__(name, value)
 
     @cached_property
-    def original(self):
+    def earliest_version(self):
         """
-        Property to retrieve the original object (first in history).
+        Property to retrieve the earliest object (first in history).
 
         This is cached because once it is set, it does not change again.
         """
@@ -312,7 +312,7 @@ class StateModel(BaseModel):
             return self.capture_history()
 
     @property
-    def latest(self):
+    def latest_version(self):
         """
         Property to retrieve the latest object (last in history).
         """
@@ -322,6 +322,14 @@ class StateModel(BaseModel):
             return v
         except IndexError:
             return self.capture_history()
+
+    @property
+    def original(self):
+        """
+        Helper property to retrieve the latest (original) object since save().
+        """
+
+        return self.latest_version
 
     def capture_history(self):
         """
