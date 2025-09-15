@@ -308,7 +308,7 @@ class StateModel(BaseModel):
         """
 
         try:
-            return history[0]
+            return self.history[0]
         except IndexError:
             return self.capture_history()
 
@@ -319,7 +319,7 @@ class StateModel(BaseModel):
         """
 
         try:
-            return history[-1]
+            return self.history[-1]
         except IndexError:
             return self.capture_history()
 
@@ -332,13 +332,13 @@ class StateModel(BaseModel):
 
         # First check if the current version of history has been captured.
         try:
-            obj = history[self.history_version]
+            obj = self.history[self.history_version]
         # Otherwise attempr we copy the model instance and store it with the
         # version as the history key.
         except IndexError:
             obj = copy_model_instance(self)
             obj.can_be_modified_on_db = False
-            history[self.history_version] = obj
+            self.history[self.history_version] = obj
 
         return obj
 
