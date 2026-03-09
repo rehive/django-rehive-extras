@@ -24,7 +24,7 @@ setup(
     author='Rehive',
     author_email='info@rehive.com',
     license='MIT',
-    install_requires=["Django>=3.0", "pyexiv2>=2.15.4", "django-filter>=21.0"],
+    install_requires=["Django>=3.0", "pyexiv2==2.15.5", "django-filter>=21.0"],
     python_requires='>=3.6',
     classifiers=[
         'Framework :: Django',
